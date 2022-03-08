@@ -63,11 +63,5 @@ updateUuid(){
 	tune2fs -U 46c9df11-afc8-452a-855a-3d11b8ff1d31 "$1"1
 }
 
-updateScript(){
-	if [ -f /run/live/medium/deepinisocheck.sh ];then
-		cp -v /run/live/medium/deepinisocheck.sh /usr/bin/deepinisocheck.sh
-		chmod a+x /usr/bin/deepinisocheck.sh
-	fi
-}
-updateScript
+
 main
