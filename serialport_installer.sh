@@ -7,6 +7,10 @@ export LANGUAGE="en_US"
 disk_path=""
 chroot_path="/mnt"
 
+umount_disk(){
+	 df |grep "$1" |awk '{print  $1}' |xargs umount -l
+}
+
 findRootfs(){
 rootfs_path=""
 disk_path="$1"
@@ -27,6 +31,7 @@ else
 		exit 2
 	fi	
 fi
+umount_disk "$disk_path"
 ddRootfs "$rootfs_path" "$disk_path"
 echo "Please wait..."
 }
@@ -55,8 +60,10 @@ updateDisk(){
 	part3_start=$(("$part2_end" + 1))
 	parted -s "$1" mkpart primary linux-swap   "$part2_start"M "$part2_end"M
 	mkswap  "$1"2
+	
 	parted -s "$1" mkpart primary ext4  "$part3_start"M 100%
-	mkfs.ext4 "$1"3
+	wipefs -a "$1"3
+	mkfs.ext4  "$1"3
 	#e2fsck -f "$1"
 	#e2fsck -yf "$1"2
 }
@@ -155,14 +162,58 @@ do
 done
 }
 
+update_ssh(){
+	if [ ! -f "$chroot_path"/etc/ssh/sshd_config ];then
+		return 1
+	else
+		sed -i '/PermitRootLogin/d' "$chroot_path"/etc/ssh/sshd_config
+		echo "PermitRootLogin yes" >> "$chroot_path"/etc/ssh/sshd_config
+	fi
+}
+
+update_fstab(){
+	if [ ! -f "$chroot_path"/etc/fstab ];then
+		return 1
+	else
+cat > "$chroot_path"/etc/fstab  << "EOF"
+# UNCONFIGURED FSTAB FOR BASE SYSTEM
+/dev/sda1 / ext3 ro,relatime 0 1
+/dev/sda2 none swap sw 0 0
+/dev/sda3 /work ext4 rw,relatime 0 1
+EOF
+	fi
+}
+
+update_vsftpd(){
+	if [ ! -f "$chroot_path"/etc/vsftpd.conf ];then
+		return 1
+	else
+		sed -i '/local_root=/d' "$chroot_path"/etc/vsftpd.conf
+cat >> "$chroot_path"/etc/vsftpd.conf <<"EOF"
+local_root=/work/
+EOF
+
+	sed -i "s|xferlog_enable=.*|#xferlog_enable=YES|g" "$chroot_path"/etc/vsftpd.conf
+	fi
+}
+
+user_check(){
+    
+    if [ "$USER" != "root" ];then
+        echo "please use root user !"
+        exit 1
+    fi
+}
 
 main(){
 
+user_check
 
-echo "welcome,Now we will install UOS"
-echo "please check which disk you want to install"
+echo "Welcome,Now we will install system"
+echo "!!!Please check you are root. Please don't use sudo!!!"
+echo "Please check which disk you want to install"
 
-lsscsi
+lsblk
 
 while true
 do
@@ -189,10 +240,16 @@ updateDisk "${disk_path}"
 
 mount_disk "${disk_path}"
 
+update_ssh
+
+update_fstab
+
+update_vsftpd	
+
+
 do_hooks
 
 choice_tty
-
 
 umount_disk "$disk_path"
 
