@@ -1,14 +1,22 @@
 #!/bin/env bash
 set -x
 
+export LANG="en_US.UTF-8"
+export LANGUAGE="en_US"
+
 disk_path=""
 chroot_path="/mnt"
 
 findRootfs(){
 rootfs_path=""
 disk_path="$1"
-if [ "$2" != "" ];then
-	rootfs_path="$2"
+if [ "$2" != "" ] ;then
+	if  [ -f $(realpath "$2") ];then
+		rootfs_path=$(realpath "$2")
+		echo "get file" "$rootfs_path" 
+	else
+		echo "want a file"
+	fi
 elif [ -f /run/live/medium/rootfs.img ];then
 	rootfs_path="/run/live/medium/rootfs.img"
 else
@@ -26,23 +34,31 @@ echo "Please wait..."
 ddRootfs(){
 	rootfs_path="$1"
 	disk_path="$2"
-	rootfs_size=$(du -m "$rootfs_path"|awk  '{print $1}')
-	for ((i=0;i<"$rootfs_size";i+=500))
-	do
-		dd if="$rootfs_path" of="$disk_path" bs=1M count=500 skip="$i" seek="$i"
-		echo "$i" doing
-		echo 3 > /proc/sys/vm/drop_caches
-		# sleep 1
-	done
-	dd if="$rootfs_path" of="$disk_path" bs=1M skip=2000 seek=2000
-	echo 3 |sudo tee /proc/sys/vm/drop_caches
+	#rootfs_size=$(du -m "$rootfs_path"|awk  '{print $1}')
+	#for ((i=0;i<="$rootfs_size";i+=500))
+	#do
+	#	dd if="$rootfs_path" of="$disk_path" bs=1M count=500 skip="$i" seek="$i"
+	#	echo "$i" doing
+	#	echo 3 > /proc/sys/vm/drop_caches
+	#	# sleep 1
+	#done
+	dd if="$rootfs_path" of="$disk_path" bs=1M 
+	echo 3 >  /proc/sys/vm/drop_caches
 	echo "done"
 }
 
 updateDisk(){
 	echo "Update disk part..."
-	parted -s "$1" mkpart primary ext4 2.5G 100%
-	mkfs.ext4 "$1"2
+	part1_end=$(parted "$1"1 unit mb print |grep "Disk ${1}1"|awk '{print $3}'| sed "s|MB||g")
+	part2_start=$(("$part1_end + 1"))
+	part2_end=$(("$part2_start + 2048"))
+	part3_start=$(("$part2_end" + 1))
+	parted -s "$1" mkpart primary linux-swap   "$part2_start"M "$part2_end"M
+	mkswap  "$1"2
+	parted -s "$1" mkpart primary ext4  "$part3_start"M 100%
+	mkfs.ext4 "$1"3
+	#e2fsck -f "$1"
+	#e2fsck -yf "$1"2
 }
 
 
@@ -86,6 +102,8 @@ do_hooks(){
         return 0
     fi
 
+	mount_dir
+
     if [ -d "$chroot_path"/hooks/deb ];then
         echo "start install deb chroot"
         chroot "$chroot_path" /bin/bash -c "dpkg -i hooks/deb/*.deb"
@@ -108,6 +126,8 @@ do_hooks(){
     else
         echo " no hooks scripts in chroot"
     fi
+
+	umount_dir
 }
 
 choice_tty(){
@@ -168,17 +188,13 @@ findRootfs "${disk_path}" "$1"
 updateDisk "${disk_path}"
 
 mount_disk "${disk_path}"
-mount_dir
 
 do_hooks
 
 choice_tty
 
-umount_dir
 
 umount_disk "$disk_path"
-
-
 
 }
 
