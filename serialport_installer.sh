@@ -1,5 +1,5 @@
 #!/bin/env bash
-set -x
+#set -x
 
 export LANG="en_US.UTF-8"
 export LANGUAGE="en_US"
@@ -164,6 +164,7 @@ done
 
 update_ssh(){
 	if [ ! -f "$chroot_path"/etc/ssh/sshd_config ];then
+		echo "no ssh conf to update"
 		return 1
 	else
 		sed -i '/PermitRootLogin/d' "$chroot_path"/etc/ssh/sshd_config
@@ -173,6 +174,7 @@ update_ssh(){
 
 update_fstab(){
 	if [ ! -f "$chroot_path"/etc/fstab ];then
+		echo "no fstab conf to update"
 		return 1
 	else
 cat > "$chroot_path"/etc/fstab  << "EOF"
@@ -186,6 +188,7 @@ EOF
 
 update_vsftpd(){
 	if [ ! -f "$chroot_path"/etc/vsftpd.conf ];then
+		echo "no vsftpd conf to update"
 		return 1
 	else
 		sed -i '/local_root=/d' "$chroot_path"/etc/vsftpd.conf

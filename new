@@ -1,0 +1,8 @@
+ gdb openssh-server openssh-client vsftpd gdb gcc g++ parted sudo vim pciutils ethtool grub-common initramfs-tools-core live-tools bc zip unzip ftp rsync tcpdump vlan ntfs-3g
+
+# ssh允许root使用
+PermitRootLogin yes
+
+# 修改tftp日志存放地址
+
+# 更新fstab
