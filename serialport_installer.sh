@@ -177,12 +177,11 @@ update_fstab(){
 		echo "no fstab conf to update"
 		return 1
 	else
-cat > "$chroot_path"/etc/fstab  << "EOF"
-# UNCONFIGURED FSTAB FOR BASE SYSTEM
+echo "# UNCONFIGURED FSTAB FOR BASE SYSTEM
 /dev/sda1 / ext3 ro,relatime 0 1
 /dev/sda2 none swap sw 0 0
-/dev/sda3 /work ext4 rw,relatime 0 1
-EOF
+/dev/sda3 /work ext4 rw,relatime 0 1" > "$chroot_path"/etc/fstab
+
 	fi
 }
 
@@ -192,11 +191,10 @@ update_vsftpd(){
 		return 1
 	else
 		sed -i '/local_root=/d' "$chroot_path"/etc/vsftpd.conf
-cat >> "$chroot_path"/etc/vsftpd.conf <<"EOF"
-local_root=/work/
-EOF
 
-	sed -i "s|xferlog_enable=.*|#xferlog_enable=YES|g" "$chroot_path"/etc/vsftpd.conf
+		echo "local_root=/work/" >> "$chroot_path"/etc/vsftpd.conf
+
+		sed -i "s|xferlog_enable=.*|#xferlog_enable=YES|g" "$chroot_path"/etc/vsftpd.conf
 	fi
 }
 
