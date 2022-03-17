@@ -198,6 +198,20 @@ update_vsftpd(){
 	fi
 }
 
+update_bashrc(){
+	echo "if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi" >> "$chroot_path"/root/.bashrc
+}
+
+update_vimrc(){
+	echo "set viminfo='50,<1000,s100,:0,n~/work/.viminfo'" >>  "$chroot_path"/root/.vimrc
+}
+
 user_check(){
     
     if [ "$USER" != "root" ];then
@@ -247,6 +261,9 @@ update_fstab
 
 update_vsftpd	
 
+update_bashrc
+
+update_vimrc
 
 do_hooks
 
