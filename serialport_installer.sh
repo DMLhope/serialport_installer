@@ -181,6 +181,7 @@ echo "# UNCONFIGURED FSTAB FOR BASE SYSTEM
 /dev/sda1 / ext3 ro,relatime 0 1
 /dev/sda2 none swap sw 0 0
 /dev/sda3 /work ext4 rw,relatime 0 1" > "$chroot_path"/etc/fstab
+	mkdir -p "$chroot_path"/work
 
 	fi
 }
