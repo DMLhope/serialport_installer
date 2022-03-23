@@ -47,6 +47,7 @@ ddRootfs(){
 	#	echo 3 > /proc/sys/vm/drop_caches
 	#	# sleep 1
 	#done
+	echo "start dd"
 	dd if="$rootfs_path" of="$disk_path" bs=1M 
 	echo 3 >  /proc/sys/vm/drop_caches
 	echo "done"
@@ -178,7 +179,7 @@ update_fstab(){
 		return 1
 	else
 echo "# UNCONFIGURED FSTAB FOR BASE SYSTEM
-/dev/sda1 / ext3 ro,relatime 0 1
+/dev/sda1 / ext3 rw,relatime 0 1
 /dev/sda2 none swap sw 0 0
 /dev/sda3 /work ext4 rw,relatime 0 1" > "$chroot_path"/etc/fstab
 	mkdir -p "$chroot_path"/work
